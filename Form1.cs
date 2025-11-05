@@ -2,10 +2,14 @@
 using ReaderB;
 using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net;
-using System.Threading.Tasks;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Forms;
+
 
 
 namespace ZK_RFID102demomain
@@ -30,16 +34,21 @@ namespace ZK_RFID102demomain
         ArrayList list = new ArrayList();
         private string fInventory_EPC_List; // Almacenar lista de consultas (si los datos leídos no han cambiado, no se realiza ninguna actualización)
         private int frmcomportindex;
-        private bool ComOpen=false;
+        private bool ComOpen= false;
         public Form1()
         {
             InitializeComponent();
-        }
-        private void RefreshStatus()
-        {
+
+            // Marco.
+            // Fuerza el uso de TLS
+            ServicePointManager.SecurityProtocol = (SecurityProtocolType)3072;
+
         }
 
-        // private void EnviarPost( string sEPC)
+
+        // Marco
+        private RFIDCollector lector = new RFIDCollector();
+
 
         public void EnviarPost(string sEPC)
         {
@@ -76,7 +85,7 @@ namespace ZK_RFID102demomain
             });
         }
 
-            private string GetReturnCodeDesc(int cmdRet)
+        private string GetReturnCodeDesc(int cmdRet)
         {
             switch (cmdRet)
             {
@@ -226,7 +235,7 @@ namespace ZK_RFID102demomain
         private void ClearLastInfo()
         { 
             
-              RefreshStatus();
+
               Edit_Type.Text = "";
               Edit_Version.Text = "";
               ISO180006B.Checked=false;
@@ -801,10 +810,11 @@ namespace ZK_RFID102demomain
                      if (sEPC.Length != EPClen*2 )
                         return;
 
-                     // Marco. Aca se leyó una etiqueta 
-                     EnviarPost( sEPC );
+                    // Marco. Aca se leyó una etiqueta 
+                    // EnviarPost(sEPC);
+                    lector.RegistrarLectura( sEPC );
 
-                     isonlistview = false;
+                    isonlistview = false;
                      for (i=0; i< ListView1_EPC.Items.Count;i++)     // Determinar si está en la lista Listview
                      { 
                         if (sEPC==ListView1_EPC.Items[i].SubItems[1].Text)
@@ -2036,7 +2046,7 @@ namespace ZK_RFID102demomain
             }
             if ((fOpenComIndex == -1) && (openresult == 0x30))
                 MessageBox.Show("TCPIP Error de comunicación", "información");
-            RefreshStatus();
+            
 
             // Marco. Cambiar de pestaña
             tabControl1.SelectedIndex = 1;
@@ -2054,7 +2064,7 @@ namespace ZK_RFID102demomain
             if (fCmdRet == 0)
             {
                 fOpenComIndex = -1;
-                RefreshStatus();
+                
                 Button3.Enabled = false;
                 Button5.Enabled = false;
                 Button1.Enabled = false;
@@ -2094,4 +2104,102 @@ namespace ZK_RFID102demomain
         }
 
     }
+
+
+
+
+    public class RFIDCollector
+    {
+        private readonly object _lock = new object();
+        private HashSet<string> _etiquetas = new HashSet<string>();
+        private System.Threading.Timer _timer;
+        private int _timeoutMs = 3000; // 3 segundos
+        private bool _enviando = false;
+
+        public RFIDCollector()
+        {
+            // Timer desactivado por defecto
+            _timer = new System.Threading.Timer(OnTimerElapsed, null, Timeout.Infinite, Timeout.Infinite);
+        }
+
+        /// <summary>
+        /// Se llama cada vez que se detecta una etiqueta RFID.
+        /// </summary>
+        public void RegistrarLectura(string codigoEtiqueta)
+        {
+            lock (_lock)
+            {
+                _etiquetas.Add(codigoEtiqueta);
+
+                // Reiniciar el timer: cuenta desde cero
+                _timer.Change(_timeoutMs, Timeout.Infinite);
+            }
+
+            // Console.WriteLine("Etiqueta detectada: " + codigoEtiqueta);
+        }
+
+        private void OnTimerElapsed(object state)
+        {
+            lock (_lock)
+            {
+                if (_enviando || _etiquetas.Count == 0)
+                    return;
+
+                _enviando = true;
+            }
+
+            HashSet<string> lote;
+            lock (_lock)
+            {
+                lote = new HashSet<string>(_etiquetas);
+                _etiquetas.Clear();
+            }
+
+            // Enviar en otro hilo (para no bloquear el programa principal)
+            ThreadPool.QueueUserWorkItem(delegate { EnviarLote(lote); });
+        }
+
+        private void EnviarLote(HashSet<string> lote)
+        {
+            try
+            {
+                Console.WriteLine("Enviando lote de " + lote.Count + " etiquetas...");
+
+                string url = "https://mpb36649e50544b887b2.free.beeceptor.com"; // tu endpoint
+
+                var datos = new
+                {
+                    user = "marcoAS",
+                    pass = "1234",
+                    tagIDs = lote.ToList()
+                };
+
+                string body = Newtonsoft.Json.JsonConvert.SerializeObject(datos);
+
+                using (var client = new WebClient())
+                {
+                    client.Headers[HttpRequestHeader.ContentType] = "application/json";
+
+                    // Esto es sincrónico, pero al ejecutarse en un hilo aparte, no bloquea la UI
+                    string response = client.UploadString(url, "POST", body);
+
+                    Console.WriteLine("Respuesta del servidor: " + response);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error al enviar lote: " + ex.Message);
+            }
+            finally
+            {
+                lock (_lock)
+                {
+                    _enviando = false;
+                }
+            }
+        }
+    }
+
+
+
 }
