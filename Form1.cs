@@ -306,9 +306,6 @@ namespace ZK_RFID102demomain
             fAppClosed = false;
             fIsInventoryScan = false;
             Timer_Test_.Enabled = false;
-            Timer_G2_Read.Enabled = false;
-            Timer_G2_Alarm.Enabled = false;
-            timer1.Enabled = false;
 
             Button3.Enabled = false;
             Button5.Enabled = false;
@@ -870,125 +867,27 @@ namespace ZK_RFID102demomain
             }
             if (Convert.ToInt32(Edit_WordPtr.Text,16) + Convert.ToInt32(textBox1.Text) > 120)
                 return;
-               Timer_G2_Read.Enabled =!Timer_G2_Read.Enabled;
-               if (Timer_G2_Read.Enabled)
-               {
-                   button2.Enabled = false;
-                   Button_DataWrite.Enabled = false;
-                   BlockWrite.Enabled = false;
-                   Button_BlockErase.Enabled = false;
-                   SpeedButton_Read_G2.Text = "detener";
-               }
-               else
-               {
-                   if (ListView1_EPC.Items.Count != 0)
-                   {
-                       button2.Enabled = true;
+               
+            if (ListView1_EPC.Items.Count != 0)
+            {
+                button2.Enabled = true;
                    
-                       Button_DataWrite.Enabled = true;
-                       BlockWrite.Enabled = true;
-                       Button_BlockErase.Enabled = true;
-                   }
-                   if (ListView1_EPC.Items.Count == 0)
-                   {
-                       button2.Enabled = true;
-                       Button_DataWrite.Enabled = false;
-                       BlockWrite.Enabled = false;
-                       Button_BlockErase.Enabled = false;
-                   }
-                   SpeedButton_Read_G2.Text = "leer";
-               }
+                Button_DataWrite.Enabled = true;
+                BlockWrite.Enabled = true;
+                Button_BlockErase.Enabled = true;
+            }
+            if (ListView1_EPC.Items.Count == 0)
+            {
+                button2.Enabled = true;
+                Button_DataWrite.Enabled = false;
+                BlockWrite.Enabled = false;
+                Button_BlockErase.Enabled = false;
+            }
+            SpeedButton_Read_G2.Text = "leer";
+               
         }
 
-        private void Timer_G2_Read_Tick(object sender, EventArgs e)
-        {
-            if (fIsInventoryScan)
-                return;
-            fIsInventoryScan = true;
-                byte WordPtr, ENum;
-                byte Num = 0;
-                byte Mem = 0;
-                byte EPClength=0;
-                string str;
-                byte[] CardData=new  byte[320];
-                if ((maskadr_textbox.Text=="")||(maskLen_textBox.Text=="") )            
-              {
-                  fIsInventoryScan = false;
-                  return;
-              }
-              if (checkBox1.Checked)
-              MaskFlag=1;
-              else
-              MaskFlag = 0;
-              Maskadr = Convert.ToByte(maskadr_textbox.Text,16);
-              MaskLen = Convert.ToByte(maskLen_textBox.Text,16);
-              if (textBox1.Text == "")
-              {
-                  fIsInventoryScan = false;
-                  return;
-              }
-                if (ComboBox_EPC2.Items.Count == 0)
-                {
-                    fIsInventoryScan = false;
-                    return;
-                }
-                if (ComboBox_EPC2.SelectedItem == null)
-                {
-                    fIsInventoryScan = false;
-                    return;
-                }
-                str = ComboBox_EPC2.SelectedItem.ToString();
-                ENum = Convert.ToByte(str.Length / 4);
-                EPClength = Convert.ToByte(str.Length / 2);
-                byte[] EPC = new byte[ENum*2];
-                EPC = HexStringToByteArray(str);
-                if (C_Reserve.Checked)
-                    Mem = 0;
-                if (C_EPC.Checked)
-                    Mem = 1;
-                if (C_TID.Checked)
-                    Mem = 2;
-                if (C_User.Checked)
-                    Mem = 3;
-                if (Edit_AccessCode2.Text == "")
-                {
-                    fIsInventoryScan = false;
-                    return;
-                }
-                if (Edit_WordPtr.Text == "")
-                {
-                    fIsInventoryScan = false;
-                    return;
-                }
-                WordPtr = Convert.ToByte(Edit_WordPtr.Text, 16);
-                Num = Convert.ToByte(textBox1.Text);
-                if (Edit_AccessCode2.Text.Length != 8)
-                {
-                    fIsInventoryScan = false;
-                    return;
-                }
-                fPassWord = HexStringToByteArray(Edit_AccessCode2.Text);
-                fCmdRet = StaticClassReaderB.ReadCard_G2(ref fComAdr, EPC, Mem, WordPtr, Num, fPassWord,Maskadr,MaskLen,MaskFlag, CardData, EPClength, ref ferrorcode, frmcomportindex);
-                if (fCmdRet == 0)
-                {
-                    byte[] daw = new byte[Num*2];
-                    Array.Copy(CardData, daw, Num * 2);
-                    listBox1.Items.Add(ByteArrayToHexString(daw));
-                    listBox1.SelectedIndex = listBox1.Items.Count - 1;
-                    AddCmdLog("ReadData", "Leer", fCmdRet);
-                }
-                if (ferrorcode != -1)
-             {
-                  StatusBar1.Panels[0].Text = DateTime.Now.ToLongTimeString() +
-                   " 'leer' Error de retorno = 0x" + Convert.ToString(ferrorcode, 2) +
-                   "(" + GetErrorCodeDesc(ferrorcode) + ")";
-                    ferrorcode=-1;
-             }
-             fIsInventoryScan = false;
-              if (fAppClosed)
-                    Close();
-        }
-
+        
         private void Button_DataWrite_Click(object sender, EventArgs e)
         {
             byte WordPtr, ENum;
@@ -1151,34 +1050,10 @@ namespace ZK_RFID102demomain
         }
 
 
-               
-        
-        private void Timer_G2_Alarm_Tick(object sender, EventArgs e)
-        {
-            if (fIsInventoryScan)
-                return;
-            fIsInventoryScan = true;
-             fCmdRet=StaticClassReaderB.CheckEASAlarm_G2(ref fComAdr,ref ferrorcode,frmcomportindex);
-            if (fCmdRet==0)
-            {
-                StatusBar1.Panels[0].Text = DateTime.Now.ToLongTimeString() + " El comando Detectar alarma EAS devuelve = 0x00 " +
-                          "(Alarma EAS detectada)";
-            }
-            else
-            {
-              AddCmdLog("CheckEASAlarm_G2", "Detectar alarma EAS", fCmdRet);
-            }
-            fIsInventoryScan = false;
-            if (fAppClosed)
-                Close();
-        }
-
         
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
             Timer_Test_.Enabled = false;
-            Timer_G2_Read.Enabled = false;
-            Timer_G2_Alarm.Enabled = false;
             fAppClosed = true;
             StaticClassReaderB.CloseComPort();
         }
@@ -1201,7 +1076,7 @@ namespace ZK_RFID102demomain
 
         private void C_TID_CheckedChanged(object sender, EventArgs e)
         {
-            if ((!Timer_Test_.Enabled) & (!Timer_G2_Alarm.Enabled) &(!Timer_G2_Read.Enabled))
+            if ((!Timer_Test_.Enabled) )
             {
                 if (ListView1_EPC.Items.Count != 0)
                     Button_DataWrite.Enabled = true;
@@ -1211,7 +1086,7 @@ namespace ZK_RFID102demomain
 
         private void C_User_CheckedChanged(object sender, EventArgs e)
         {
-            if ((!Timer_Test_.Enabled) & (!Timer_G2_Alarm.Enabled) & (!Timer_G2_Read.Enabled))
+            if ((!Timer_Test_.Enabled) )
             {
                 if (ListView1_EPC.Items.Count != 0)
                     Button_DataWrite.Enabled = true;
@@ -1221,7 +1096,7 @@ namespace ZK_RFID102demomain
 
         private void C_Reserve_CheckedChanged(object sender, EventArgs e)
         {
-            if ((!Timer_Test_.Enabled) & (!Timer_G2_Alarm.Enabled) &(!Timer_G2_Read.Enabled))
+            if ((!Timer_Test_.Enabled) )
             {
                 if (ListView1_EPC.Items.Count != 0)
                     Button_DataWrite.Enabled = true;
@@ -1231,10 +1106,6 @@ namespace ZK_RFID102demomain
 
         private void tabControl1_Selecting(object sender, TabControlCancelEventArgs e)
         {
-                timer1.Enabled = false;
-
-                Timer_G2_Alarm.Enabled = false;
-                Timer_G2_Read.Enabled = false;
                 Timer_Test_.Enabled = false;
                 SpeedButton_Read_G2.Text = "Leer";
                 button2.Text = "Consultar";
@@ -1567,42 +1438,11 @@ namespace ZK_RFID102demomain
                         }
                     }
                 }
-                if (comboBox4.SelectedIndex == 0)
-                {
-                    timer1.Enabled = false;
-                }
             }
             AddCmdLog("SetWorkMode", "Config", fCmdRet);
         }
 
 
-        private void GetData()
-        {
-            byte[] ScanModeData = new byte[40960];
-          int ValidDatalength,i;
-          string temp, temps;
-          ValidDatalength = 0;
-          fCmdRet = StaticClassReaderB.ReadActiveModeData(ScanModeData, ref ValidDatalength, frmcomportindex);
-          if (fCmdRet == 0)
-          { 
-            temp="";
-            temps=ByteArrayToHexString(ScanModeData);
-            for(i=0;i<ValidDatalength;i++)
-            {
-                temp = temp + temps.Substring(i * 2, 2) + " ";
-            }
-          }
-         // AddCmdLog("Get", "Conseguir", fCmdRet);
-        }
-        private void timer1_Tick(object sender, EventArgs e)
-        {
-            if (fIsInventoryScan)
-                fIsInventoryScan = true;
-            GetData();
-            if (fAppClosed)
-                Close();
-            fIsInventoryScan = false;
-        }
 
         
         private void radioButton_band1_CheckedChanged(object sender, EventArgs e)
@@ -2088,7 +1928,6 @@ namespace ZK_RFID102demomain
                 
                 ComOpen = false;
                 button12.Enabled = false;
-                timer1.Enabled = false;
                 comboBox4.SelectedIndex = 0;
                 button_OffsetTime.Enabled = false;
                 button_settigtime.Enabled = false;

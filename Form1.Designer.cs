@@ -173,9 +173,6 @@
             this.Port = new System.Windows.Forms.StatusBarPanel();
             this.Manufacturername = new System.Windows.Forms.StatusBarPanel();
             this.Timer_Test_ = new System.Windows.Forms.Timer(this.components);
-            this.Timer_G2_Read = new System.Windows.Forms.Timer(this.components);
-            this.Timer_G2_Alarm = new System.Windows.Forms.Timer(this.components);
-            this.timer1 = new System.Windows.Forms.Timer(this.components);
             this.tabControl1.SuspendLayout();
             this.TabSheet_CMD.SuspendLayout();
             this.groupBox37.SuspendLayout();
@@ -1744,19 +1741,6 @@
             // 
             this.Timer_Test_.Tick += new System.EventHandler(this.Timer_Test__Tick);
             // 
-            // Timer_G2_Read
-            // 
-            this.Timer_G2_Read.Interval = 200;
-            this.Timer_G2_Read.Tick += new System.EventHandler(this.Timer_G2_Read_Tick);
-            // 
-            // Timer_G2_Alarm
-            // 
-            this.Timer_G2_Alarm.Tick += new System.EventHandler(this.Timer_G2_Alarm_Tick);
-            // 
-            // timer1
-            // 
-            this.timer1.Tick += new System.EventHandler(this.timer1_Tick);
-            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -1884,8 +1868,6 @@
         private System.Windows.Forms.ProgressBar progressBar1;
         private System.Windows.Forms.Timer Timer_Test_;
         private System.Windows.Forms.ComboBox ComboBox_EPC2;
-        private System.Windows.Forms.Timer Timer_G2_Read;
-        private System.Windows.Forms.Timer Timer_G2_Alarm;
         private System.Windows.Forms.ListView ListView1_EPC;
         private System.Windows.Forms.ColumnHeader listViewCol_Number;
         private System.Windows.Forms.ColumnHeader listViewCol_ID;
@@ -1915,7 +1897,6 @@
         private System.Windows.Forms.Label label42;
         private System.Windows.Forms.Label label41;
         private System.Windows.Forms.TextBox textBox3;
-        private System.Windows.Forms.Timer timer1;
         private System.Windows.Forms.GroupBox groupBox30;
         private System.Windows.Forms.RadioButton radioButton_band4;
         private System.Windows.Forms.RadioButton radioButton_band3;
