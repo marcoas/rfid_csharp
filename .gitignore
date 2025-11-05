@@ -1,0 +1,39 @@
+# Build results
+bin/
+obj/
+[Bb]ackup/
+[Bb]uild/
+[Ll]ogs/
+
+# NuGet packages
+packages/
+*.nupkg
+*.snupkg
+
+# User-specific files
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# VS cache
+.vs/
+*.VC.db
+*.VC.VC.opendb
+
+# Other temp files
+*.tmp
+*.log
+*.cache
+*.bak
+*.backup
+*.old
+
+# Executables
+*.exe
+*.dll
+*.pdb
+
+# OS generated files
+.DS_Store
+Thumbs.db
