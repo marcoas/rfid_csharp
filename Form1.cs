@@ -28,9 +28,9 @@ namespace ZK_RFID102demomain
         private int fCmdRet=30; // Valores de retorno de todas las instrucciones ejecutadas
         private int fOpenComIndex; // Número de índice del puerto serie abierto
         private bool fIsInventoryScan;
-        private byte[] fOperEPC=new byte[36];
+        // private byte[] fOperEPC=new byte[36];
         private byte[] fPassWord=new byte[4];
-        private byte[] fOperID_6B=new byte[8];
+        // private byte[] fOperID_6B=new byte[8];
         ArrayList list = new ArrayList();
         private string fInventory_EPC_List; // Almacenar lista de consultas (si los datos leídos no han cambiado, no se realiza ninguna actualización)
         private int frmcomportindex;
@@ -49,41 +49,6 @@ namespace ZK_RFID102demomain
         // Marco
         private RFIDCollector lector = new RFIDCollector();
 
-
-        public void EnviarPost(string sEPC)
-        {
-            Task.Factory.StartNew(() =>
-            {
-                try
-                {
-                    using (var client = new WebClient())
-                    {
-                        // Fuerza el uso de TLS
-                        ServicePointManager.SecurityProtocol = (SecurityProtocolType)3072;
-
-                        client.Headers[HttpRequestHeader.ContentType] = "application/json";
-
-                        var datos = new
-                        {
-                            user = "marcoAS",
-                            pass = "1234",
-                            tagID = sEPC
-                        };
-                        // string json = "{\"user\":\"marcoAS\",\"pass\":\"1234\", \"tagID\": \"" + sEPC + "\"}";
-                        string json = JsonConvert.SerializeObject(datos);
-
-                        string respuesta = client.UploadString("https://mpb36649e50544b887b2.free.beeceptor.com", "POST", json);
-                        // string respuesta = client.UploadString("http://marco.dpsonline.com.ar/gargano", "GET");
-
-                        MessageBox.Show(respuesta);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("ERROR: " + ex.Message);
-                }
-            });
-        }
 
         private string GetReturnCodeDesc(int cmdRet)
         {
@@ -169,24 +134,7 @@ namespace ZK_RFID102demomain
                     return "";
             }
         }
-        private string GetErrorCodeDesc(int cmdRet)
-        {
-            switch (cmdRet)
-            {
-                case 0x00:
-                    return "Otros errores";
-                case 0x03:
-                    return "Límite de memoria excedido o valor de PC no compatible";
-                case 0x04:
-                    return "Bloqueo de memoria";
-                case 0x0b:
-                    return "Suministro de energía insuficiente";
-                case 0x0f:
-                    return "Error no específico";
-                default:
-                    return "";
-            }
-        }
+        
         private byte[] HexStringToByteArray(string s)
         {
             s = s.Replace(" ", "");
@@ -807,8 +755,7 @@ namespace ZK_RFID102demomain
                      if (sEPC.Length != EPClen*2 )
                         return;
 
-                    // Marco. Aca se leyó una etiqueta 
-                    // EnviarPost(sEPC);
+                    // Marco. Aca se leyó una etiqueta                     
                     lector.RegistrarLectura( sEPC );
 
                     isonlistview = false;
